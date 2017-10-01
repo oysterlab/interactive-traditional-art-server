@@ -31,8 +31,8 @@ then access [http://localhost:5000](http://localhost:5000) for test
 ## About websocket event
 connect to ```[host-address]:5000/visual``` by websocket
 
-### How to request styled image 
-send multipart post request 
+### How to send request styled image 
+multipart post request 
 #### parameters
 - photo: image-file
 - styleType: string
@@ -41,8 +41,9 @@ send multipart post request
 ### Consume new styled image event
 when new styled image generated, server will trigger websocket event on ```current-history``` and ```styled-image-generated```.
 
-#### trigger event (```styled-image-generated```) data json format
-``` {
+#### ```styled-image-generated``` event data json format
+```
+    {
         originSrc,
         styleSrc,
         styleName,
@@ -50,8 +51,9 @@ when new styled image generated, server will trigger websocket event on ```curre
     }
 ```
 
-#### trigger event (```current-history```) data json format
-```[
+#### ```current-history``` event data json format
+```
+   [
     {
         originSrc,
         styleSrc,
@@ -72,8 +74,9 @@ when new styled image generated, server will trigger websocket event on ```curre
 ### Request current history
 emit signal on websocket with ```get-history``` then server will trigger ```current-history``` event
 
-#### trigger event (```current-history```) data json format
-```[
+#### ```current-history``` event data json format
+```
+   [
     {
         originSrc,
         styleSrc,
