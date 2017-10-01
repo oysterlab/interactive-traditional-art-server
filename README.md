@@ -18,10 +18,11 @@
 
 - test client settup
 ```
-    test-views> npm install
+    test-view> npm install
 ```
 
 ## Run
 ```
    python server.py
 ```
+then access [http://localhost:5000](http://localhost:5000)
