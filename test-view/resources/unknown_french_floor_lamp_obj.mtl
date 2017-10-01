@@ -1,0 +1,31 @@
+# Max2Mtl Version 4.0 Mar 10th, 2001
+#
+# Multi/Sub unknown_french_floor_lamp (3) to come 
+#
+newmtl unknown_french_floor_lamp_mtl_1
+Ka  0.0 0.0 0.0
+Kd  0.0 0.0 0.0
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+#
+newmtl unknown_french_floor_lamp_mtl_2
+Ka  0.4 0.3 0.2
+Kd  0.4 0.3 0.2
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+#
+newmtl unknown_french_floor_lamp_mtl_3
+Ka  0.0 0.0 0.0
+Kd  0.0 0.0 0.0
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+#
+# Multi/Sub unknown_french_floor_lamp done 
+#
+# EOF
