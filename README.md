@@ -25,4 +25,67 @@
 ```
    python server.py
 ```
-then access [http://localhost:5000](http://localhost:5000)
+then access [http://localhost:5000](http://localhost:5000) for test
+
+
+## About websocket event
+connect to ```[host-address]:5000/visual``` by websocket
+
+### How to request styled image 
+send multipart post request 
+#### parameters
+- photo: image-file
+- styleType: string
+
+
+### Consume new styled image event
+when new styled image generated, server will trigger websocket event on ```current-history``` and ```styled-image-generated```.
+
+#### trigger event (```styled-image-generated```) data json format
+``` {
+        originSrc,
+        styleSrc,
+        styleName,
+        createdDate
+    }
+```
+
+#### trigger event (```current-history```) data json format
+```[
+    {
+        originSrc,
+        styleSrc,
+        styleName,
+        createdDate
+    },
+    {
+        originSrc,
+        styleSrc,
+        styleName,
+        createdDate
+    },
+    ...
+   ]
+```
+
+
+### Request current history
+emit signal on websocket with ```get-history``` then server will trigger ```current-history``` event
+
+#### trigger event (```current-history```) data json format
+```[
+    {
+        originSrc,
+        styleSrc,
+        styleName,
+        createdDate
+    },
+    {
+        originSrc,
+        styleSrc,
+        styleName,
+        createdDate
+    },
+    ...
+   ]
+```
