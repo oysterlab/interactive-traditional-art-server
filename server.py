@@ -1,6 +1,7 @@
 import os
 from flask import send_file, request, session, jsonify
 from flask_cors import CORS
+import threading
 
 import glob
 import sys
@@ -29,30 +30,69 @@ from styletransfer2 import styler as styler2
 if not os.path.exists('./origins'):
     os.makedirs('./origins')
 
-if not os.path.exists('./styled'):
-    os.makedirs('./styled')    
+if not os.path.exists('./styles'):
+    os.makedirs('./styles')
 
-@app.route('/send_image', methods=['POST'])
+STYLE_TYPES = [
+    {
+        'name': 'starrynight',
+        'modelPath': os.path.join('./styletransfer2/models/starrynight.ckpt'),
+        'styleSrc': '/styles/starrynight.jpg'
+    },
+    {
+        'name': 'wave',
+        'modelPath': os.path.join('./styletransfer1/models/wave.ckpt'),
+        'styleSrc': '/styles/wave.jpg'
+    },
+    {
+        'name': 'scream',
+        'modelPath': os.path.join('./styletransfer1/models/scream.ckpt'),
+        'styleSrc': '/styles/scream.jpg'
+    },
+    {
+        'name': 'udnie',
+        'modelPath': os.path.join('./styletransfer1/models/udnie.ckpt'),
+        'styleSrc': '/styles/udnie.jpg'
+    },
+    {
+        'name': 'rainprincess',
+        'modelPath': os.path.join('./styletransfer1/models/rainprincess.ckpt'),
+        'styleSrc': '/styles/rainprincess.jpg'
+    },
+    {
+        'name': 'wreck',
+        'modelPath': os.path.join('./styletransfer1/models/wreck.ckpt'),
+        'styleSrc': '/styles/wreck.jpg'
+    },
+]
+
+@app.route('/selected-style', methods=['GET'])
+def selected_style():
+    styleId = request.args.get('styleId')
+    data = {
+        'styleId': styleId
+    }
+    socketio.emit('selected-style', json.dumps(data),  namespace='/visual')
+    return jsonify(data)
+
+@app.route('/send-image', methods=['POST'])
 def sendImage():
-    print("send_image", request.files)
-    file = request.files['photo']
-    styleType = request.form.get('styleType')
-    
-    print('styleType', styleType)
+    print("send-image", request.files)
 
-    style = 'starrynight'
+    file = request.files['photo']
+    styleId = int(request.form.get('styleType'))
+
+    style = STYLE_TYPES[styleId]
 
     filename, ext = os.path.splitext(os.path.basename(file.filename))
 
-    currTime = str(int(round(time.time() * 1000)))
+    createdDate = str(int(round(time.time() * 1000)))
 
-    originName = filename + '-' + currTime + ext
+    originName = filename + '-' + createdDate + '-' + str(styleId) + ext
     originPath = os.path.join('./origins', originName)
 
-    styledName = filename + '-' + currTime + ext
-    styledPath = os.path.join('./styled', styledName)
-
-    modelPath = os.path.join('./styletransfer2/models/' + style + '.ckpt')
+    resultName = filename + '-' + createdDate + '-' + str(styleId) + ext
+    resultPath = os.path.join('./results', resultName)
 
     file.save(originPath)
 
@@ -62,34 +102,27 @@ def sendImage():
         'originName': originName
     }), namespace='/visual')
 
-    if (styleType == '1'):
+    if (styleId == 0):
         styler2.generate_to_art({
             'input_img_path': originPath,
-            'output_img_path': styledPath,
-            'model_path': modelPath,
+            'output_img_path': resultPath,
+            'model_path': style['modelPath'],
             'upsample_method': 'resize',
             'content_target_resize': 1.0
         })
-    else:  
-        modelMap = {
-            '2': 'wave.ckpt',
-            '3': 'rain_princess.ckpt',
-            '4': 'scream.ckpt',
-            '5': 'udnie.ckpt',
-            '6': 'wreck.ckpt',
-        }
-        modelName = modelMap[styleType]
-        modelPath = './styletransfer1/models/' + modelName
+    else:
         styler1.generate_to_art({
             'input_img_path': originPath,
-            'output_img_path': styledPath,
-            'model_path': modelPath})
+            'output_img_path': resultPath,
+            'model_path': style['modelPath']})
 
     result = {
-        'style': style,
-        'originName': originName,
-        'styledName': styledName,
-        'createTime': currTime
+        'originSrc': '/origins/' + originName,
+        'styleSrc': style['styleSrc'],
+        'resultSrc': '/results/' + resultName,
+        'styleName': style['name'],
+        'styleId': styleId,
+        'createdDate': createdDate
     }
 
     socketio.emit('styled-image-generated', json.dumps(result),  namespace='/visual')
@@ -98,23 +131,12 @@ def sendImage():
     socketio.emit('current-history', json.dumps(history),  namespace='/visual', broadcast=True)
     return jsonify(result)
 
+@app.route('/get-styles-meta', methods=['GET'])
+def getStylesMeta():
+    return jsonify(STYLE_TYPES)
 
 @app.route('/history', methods=['GET'])
 def getHistoryHttp():
-    origins = glob.glob('./origins/*')
-
-    results = []
-    for origin in origins:
-        createTime = origin[origin.rfind('-') + 1:]
-        filename = os.path.basename(origin)
-
-        createdTime, ext = os.path.splitext(os.path.basename(createTime))
-        results.append({
-            "originName": filename,
-            "ext": ext,
-            "createdTime": createdTime,
-        })
-
     return jsonify(_history())
 
 def _history():
@@ -122,15 +144,18 @@ def _history():
 
     results = []
     for origin in origins:
-        createTime = origin[origin.rfind('-') + 1:]
         filename = os.path.basename(origin)
+        _, createDate, styleId = filename.split('-')
+        styleId, _ = os.path.splitext(os.path.basename(styleId))
+        style = STYLE_TYPES[int(styleId)]
 
-        createdTime, ext = os.path.splitext(os.path.basename(createTime))
         results.append({
-            "originName": 'origins/'+filename,
-            "styledName": 'styled/'+filename,
-            "ext": ext,
-            "createdTime": createdTime,
+            "originSrc": '/origins/'+filename,
+            "styleSrc": style['styleSrc'],
+            "resultSrc": '/results/'+filename,
+            "styleName": style['name'],
+            "styleId": styleId,
+            "createDate": createDate,
         })
 
     return results
@@ -157,13 +182,19 @@ def disconnect():
 def receiveInputImage(imgData):
     print('input_image', imgData)
 
-@socketio.on('show-styled-request', namespace='/visual')
-def showStyledRequest(imageName):
-    result = {
-        'originName': imageName,
-        'styledName': imageName,
-    }
-    emit('show-styled', json.dumps({result}), broadcast=True)
+@socketio.on('select-result-request', namespace='/visual')
+def showStyledRequest(requestMeta):
+    print('select-result-request', requestMeta)
+    # result = {
+    #     'originName': imageName,
+    #     'resultName': imageName,
+    # }
+    emit('selected-result', json.dumps(requestMeta), broadcast=True)
+
+@socketio.on('get-styles-meta', namespace='/visual')
+def getStylesMeta():
+    emit('styles-meta', json.dumps(STYLE_TYPES), broadcast=True)
+
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0')
+    socketio.run(app, host='0.0.0.0', async_mode=None)

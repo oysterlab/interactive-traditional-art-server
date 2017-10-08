@@ -29,7 +29,7 @@ then access [http://localhost:5000](http://localhost:5000) for test
 
 
 ## About websocket event
-connect to ```[host-address]:5000/visual``` by websocket
+connect to ```http://[host-address]:5000/visual``` by websocket
 
 ### How to send request styled image 
 multipart post request 
