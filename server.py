@@ -125,7 +125,7 @@ def sendImage():
         'createdDate': createdDate
     }
 
-    socketio.emit('styled-image-generated', json.dumps(result),  namespace='/visual')
+    socketio.emit('result-generated', json.dumps(result),  namespace='/visual')
 
     history = _history()
     socketio.emit('current-history', json.dumps(history),  namespace='/visual', broadcast=True)
@@ -185,10 +185,7 @@ def receiveInputImage(imgData):
 @socketio.on('select-result-request', namespace='/visual')
 def showStyledRequest(requestMeta):
     print('select-result-request', requestMeta)
-    # result = {
-    #     'originName': imageName,
-    #     'resultName': imageName,
-    # }
+    requestMeta['styleId'] = int(requestMeta['styleId'])
     emit('selected-result', json.dumps(requestMeta), broadcast=True)
 
 @socketio.on('get-styles-meta', namespace='/visual')
