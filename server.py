@@ -30,8 +30,8 @@ from styletransfer2 import styler as styler2
 if not os.path.exists('./origins'):
     os.makedirs('./origins')
 
-if not os.path.exists('./styles'):
-    os.makedirs('./styles')
+if not os.path.exists('./results'):
+    os.makedirs('./results')
 
 STYLE_TYPES = [
     {
