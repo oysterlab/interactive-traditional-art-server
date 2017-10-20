@@ -64,6 +64,11 @@ STYLE_TYPES = [
         'modelPath': os.path.join('./styletransfer1/models/wreck.ckpt'),
         'styleSrc': '/styles/wreck.jpg'
     },
+    {
+        'name': 'candy',
+        'modelPath': os.path.join('./styletransfer2/models/candy_final.ckpt'),
+        'styleSrc': '/styles/candy.jpg'
+    },
 ]
 
 @app.route('/selected-style', methods=['GET'])
@@ -102,7 +107,7 @@ def sendImage():
         'originName': originName
     }), namespace='/visual')
 
-    if (styleId == 0):
+    if ( (styleId == 0) or (styleId == 6) ):
         styler2.generate_to_art({
             'input_img_path': originPath,
             'output_img_path': resultPath,
@@ -167,6 +172,7 @@ def index():
 @socketio.on('get-history', namespace='/visual')
 def getHistorySocket():
     history = _history()
+    print('histoyr')
     emit('current-history', json.dumps(history), broadcast=True)
 
 @socketio.on('connect', namespace='/visual')
